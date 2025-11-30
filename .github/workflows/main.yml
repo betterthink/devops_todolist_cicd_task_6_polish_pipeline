@@ -16,6 +16,7 @@ on:
       matrix-artifact:
         description: "Matrix artefact to use"
         required: true
+        type: choice
         options:
           - python-artifacts-ubuntu-latest-3.8
           - python-artifacts-ubuntu-latest-3.9
@@ -100,7 +101,7 @@ jobs:
     - uses: actions/download-artifact@v4
       name: Download python artifacts
       with:
-        name: python-artifacts
+        name: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.matrix_artifact || 'python-artifacts-ubuntu-latest-3.9' }}
         path: .
 
     - name: Login to Docker Hub
