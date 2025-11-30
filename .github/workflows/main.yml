@@ -13,6 +13,14 @@ on:
     branches: ["main"]
   workflow_dispatch:
     inputs:
+      environment:
+        description: "Target deployment environment"
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+        default: development
       matrix-artifact:
         description: "Matrix artefact to use"
         required: true
@@ -22,9 +30,9 @@ on:
           - python-artifacts-ubuntu-latest-3.9
           - python-artifacts-windows-latest-3.8
           - python-artifacts-windows-latest-3.9
-        default: 'python-artifacts-ubuntu-latest-3.8'
+        default: 'python-artifacts-ubuntu-latest-3.9'
+
 env:
-  PythonVersion: 3.8
   DockerImageName: todoapp
 
 
@@ -149,6 +157,7 @@ jobs:
 
   deploy-helm-dev:
     name: Deploy helm to Development
+    if: github.ref_name == 'main' && (github.event_name != 'workflow_dispatch' || github.event.inputs.environment == 'development')
     uses: ./.github/workflows/reusable-deployment.yml
     needs: [helm-ci, docker-ci]
     secrets: inherit
@@ -158,8 +167,9 @@ jobs:
 
   deploy-helm-stg:
     name: Deploy helm to Staging
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging'
     uses: ./.github/workflows/reusable-deployment.yml
-    needs: [deploy-helm-dev]
+    needs: [helm-ci, docker-ci]
     secrets: inherit
     with:
       environment: staging
